@@ -8,7 +8,7 @@ pipeline {
         ECR_REPO = 'userservice'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
-        APP_SERVER_IP = '15.252.45.161'   // replace with your app-server's Elastic IP
+        APP_SERVER_IP = '15.252.45.161'
     }
 
     stages {
@@ -49,16 +49,28 @@ pipeline {
 
         stage('Deploy to app-server') {
             steps {
-                sshagent(credentials: ['app-server-ssh-key']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ec2-user@${APP_SERVER_IP} '
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
-                            docker pull ${ECR_URI}:latest &&
-                            docker stop userservice || true &&
-                            docker rm userservice || true &&
-                            docker run -d --name userservice -p 8080:8080 ${ECR_URI}:latest
-                        '
-                    """
+                withCredentials([
+                    string(credentialsId: 'db-host', variable: 'DB_HOST'),
+                    string(credentialsId: 'db-name', variable: 'DB_NAME'),
+                    string(credentialsId: 'db-user', variable: 'DB_USER'),
+                    string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
+                ]) {
+                    sshagent(credentials: ['app-server-ssh-key']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@${APP_SERVER_IP} '
+                                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
+                                docker pull ${ECR_URI}:latest &&
+                                docker stop userservice || true &&
+                                docker rm userservice || true &&
+                                docker run -d --name userservice -p 8080:8080 \\
+                                    -e DB_HOST=${DB_HOST} \\
+                                    -e DB_NAME=${DB_NAME} \\
+                                    -e DB_USER=${DB_USER} \\
+                                    -e DB_PASSWORD=${DB_PASSWORD} \\
+                                    ${ECR_URI}:latest
+                            '
+                        """
+                    }
                 }
             }
         }
