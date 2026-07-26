@@ -5,9 +5,9 @@ pipeline{
 	
 	environment{
 		
-		AWS_ACCOUNT_ID = ''
-		AWS_REGION = 
-		ECR_REPO = 
+		AWS_ACCOUNT_ID = '982920153818'
+		AWS_REGION =  'ap-south-1'
+		ECR_REPO = 'userservice'
 		IMAGE_TAG = "${env.BUILD_NUMBER}"
 		ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
 		
