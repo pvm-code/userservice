@@ -14,7 +14,7 @@ import com.userservice.response.APIResponse;
 import com.userservice.service.UserService;
 
 @RestController
-@RequestMapping("api/v2/user")
+@RequestMapping("api/v1/user")
 public class UserController {
 	
 	private final UserService userService;
