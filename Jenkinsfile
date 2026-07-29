@@ -1,14 +1,12 @@
 pipeline {
-
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '982920153818'
-        AWS_REGION = 'ap-south-1'
-        ECR_REPO = 'userservice'
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-        ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
-        APP_SERVER_IP = '15.252.45.161'
+        AWS_REGION   = 'ap-south-1'
+        ECR_REGISTRY = '982920153818.dkr.ecr.ap-south-1.amazonaws.com'
+        IMAGE_NAME   = 'userservice'
+        IMAGE_TAG    = "${env.BUILD_NUMBER}"
+        APP_SERVER   = '15.252.45.161'
     }
 
     stages {
@@ -19,60 +17,79 @@ pipeline {
             }
         }
 
-        stage('Build JAR') {
-            steps {
-                sh './mvnw clean package -DskipTests'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${ECR_URI}:${IMAGE_TAG} ."
-                sh "docker tag ${ECR_URI}:${IMAGE_TAG} ${ECR_URI}:latest"
+                sh """
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                """
             }
         }
 
-        stage('Push to ECR') {
+        stage('Login to Amazon ECR') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: 'aws-ecr-creds'
                 ]]) {
                     sh """
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                        docker push ${ECR_URI}:${IMAGE_TAG}
-                        docker push ${ECR_URI}:latest
+                        aws ecr get-login-password --region ${AWS_REGION} \
+                        | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                     """
                 }
             }
         }
 
-        stage('Deploy to app-server') {
+        stage('Tag Image') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'db-host', variable: 'DB_HOST'),
-                    string(credentialsId: 'db-name', variable: 'DB_NAME'),
-                    string(credentialsId: 'db-user', variable: 'DB_USER'),
-                    string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
-                ]) {
-                    sshagent(credentials: ['app-server-ssh-key']) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no ec2-user@${APP_SERVER_IP} '
-                                aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com &&
-                                docker pull ${ECR_URI}:latest &&
-                                docker stop userservice || true &&
-                                docker rm userservice || true &&
-                                docker run -d --name userservice -p 8080:8080 \\
-                                    -e DB_HOST=${DB_HOST} \\
-                                    -e DB_NAME=${DB_NAME} \\
-                                    -e DB_USER=${DB_USER} \\
-                                    -e DB_PASSWORD=${DB_PASSWORD} \\
-                                    ${ECR_URI}:latest
-                            '
-                        """
-                    }
+                sh """
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                    ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                    ${ECR_REGISTRY}/${IMAGE_NAME}:latest
+                """
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh """
+                    docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push ${ECR_REGISTRY}/${IMAGE_NAME}:latest
+                """
+            }
+        }
+
+        stage('Deploy to App Server') {
+            steps {
+                sshagent(credentials: ['app-server-ssh-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ec2-user@${APP_SERVER} '
+                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+
+                            cd /opt/microservices
+
+                            docker compose pull user-service
+                            docker compose up -d user-service
+                        '
+                    """
                 }
             }
+        }
+
+    }
+
+    post {
+        success {
+            echo 'User Service deployed successfully.'
+        }
+
+        failure {
+            echo 'Deployment failed.'
+        }
+
+        always {
+            sh 'docker image prune -f'
         }
     }
 }
