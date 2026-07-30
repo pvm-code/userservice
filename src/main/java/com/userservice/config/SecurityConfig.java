@@ -23,13 +23,11 @@ public class SecurityConfig {
 	
 	
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
-	private final AuthenticationProvider authenticationProvider;
 	private final CustomUserDetailsService userDetailsService;
 
-	public SecurityConfig(CustomUserDetailsService userDetailsService, AuthenticationProvider authenticationProvider, JwtAuthenticationFilter jwtAuthenticationFilter) {
+	public SecurityConfig(CustomUserDetailsService userDetailsService,  JwtAuthenticationFilter jwtAuthenticationFilter) {
 		
 		this.userDetailsService = userDetailsService;
-		this.authenticationProvider = authenticationProvider;
 		this.jwtAuthenticationFilter = jwtAuthenticationFilter;
 	}
 
@@ -94,21 +92,6 @@ public class SecurityConfig {
 		return http.build();
 		
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	
