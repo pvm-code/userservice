@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.userservice.dto.request.RegisterRequest;
+import com.userservice.entity.Role;
 import com.userservice.entity.User;
 import com.userservice.kafka.event.UserRegisteredEvent;
 import com.userservice.kafka.producer.UserEventProducer;
@@ -37,6 +38,7 @@ public class UserService {
 		user.setName(request.getName());
 		user.setEmail(request.getEmail());
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
+		user.setRole(Role.USER);
 		
 		User savedUser=userRepository.save(user);
 		
