@@ -41,9 +41,6 @@ pipeline {
                 sh """
                     docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
                     ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
-                    ${ECR_REGISTRY}/${IMAGE_NAME}:latest
                 """
             }
         }
@@ -52,7 +49,6 @@ pipeline {
             steps {
                 sh """
                     docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                    docker push ${ECR_REGISTRY}/${IMAGE_NAME}:latest
                 """
             }
         }
