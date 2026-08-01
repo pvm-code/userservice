@@ -58,6 +58,7 @@ pipeline {
                 sshagent(credentials: ['app-server-ssh-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ec2-user@${APP_SERVER} '
+                        export IMAGE_TAG=${IMAGE_TAG}
                             aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
                             cd /opt/microservices
