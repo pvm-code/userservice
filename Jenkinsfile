@@ -53,18 +53,19 @@ pipeline {
             }
         }
 
-        stage('Deploy to App Server') {
+        stage('Deploy to kubernetes') {
             steps {
-                sshagent(credentials: ['app-server-ssh-key']) {
+                sshagent(credentials: ['k8s-server-ssh-key']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ec2-user@${APP_SERVER} '
-                        export IMAGE_TAG=${IMAGE_TAG}
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        ssh -o StrictHostKeyChecking=no ec2-user@${K8S_SERVER} '
+                        
+                         kubectl set image deployment/user-service \
+                   		 
+                   		 user-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                            cd /opt/microservices
+                    	 kubectl rollout status deployment/user-service
+                        
 
-                            docker compose pull user-service
-                            docker compose up -d user-service
                         '
                     """
                 }
