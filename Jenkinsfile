@@ -53,19 +53,14 @@ pipeline {
             }
         }
 
-        stage('Deploy to kubernetes') {
+        stage('Deploy to Kubernetes') {
             steps {
                 sshagent(credentials: ['k8s-server-ssh-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ec2-user@${K8S_SERVER} '
-                        
-                         kubectl set image deployment/user-service \
-                   		 
-                   		 user-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            sudo kubectl set image deployment/user-service user-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                    	 kubectl rollout status deployment/user-service
-                        
-
+                            sudo kubectl rollout status deployment/user-service
                         '
                     """
                 }
