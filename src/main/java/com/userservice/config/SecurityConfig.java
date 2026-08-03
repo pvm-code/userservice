@@ -76,8 +76,7 @@ public class SecurityConfig {
 							
 							"/api/v1/auth/**",
 							"/api/v1/user/register/**",
-							"/actuator/health",
-					        "/actuator/health/**"
+					        "/actuator/**"
 							
 							).permitAll()
 							 .anyRequest().authenticated()
