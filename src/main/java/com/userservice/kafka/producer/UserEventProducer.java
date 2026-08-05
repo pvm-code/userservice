@@ -7,6 +7,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import com.userservice.kafka.event.UserRegisteredEvent;
+import com.userservice.metrics.MetricsService;
 
 @Service
 public class UserEventProducer {
@@ -15,12 +16,17 @@ public class UserEventProducer {
 	private final KafkaTemplate<String, String> kafkaTemplate;
 	
 	private final ObjectMapper objectMapper;
+	
+	private final MetricsService metricsService;
+
 
 	
 	
-	public UserEventProducer(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
+	public UserEventProducer(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper,MetricsService metricsService) {
 		this.kafkaTemplate = kafkaTemplate;
 		this.objectMapper = objectMapper;
+		this.metricsService=metricsService;
+
 	}
 
 	public void publishUserRegistered(UserRegisteredEvent event) {
@@ -36,6 +42,7 @@ public class UserEventProducer {
 					
 					
 					);
+			metricsService.incrementKafkaProduced();
 		} catch (JsonProcessingException e) {
 		    e.printStackTrace();
 		    throw new RuntimeException("failed to serialize event", e);

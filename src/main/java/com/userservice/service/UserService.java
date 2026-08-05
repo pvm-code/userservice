@@ -10,6 +10,7 @@ import com.userservice.entity.Role;
 import com.userservice.entity.User;
 import com.userservice.kafka.event.UserRegisteredEvent;
 import com.userservice.kafka.producer.UserEventProducer;
+import com.userservice.metrics.MetricsService;
 import com.userservice.repository.UserRepository;
 
 @Service
@@ -19,12 +20,17 @@ public class UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder ;
 	private final UserEventProducer userEventProducer;
+	private final MetricsService metricsService;
 	
-	public UserService(UserRepository userRepository,PasswordEncoder passwordEncoder,UserEventProducer userEventProducer) {
+	public UserService(UserRepository userRepository
+			,PasswordEncoder passwordEncoder
+			,UserEventProducer userEventProducer
+			,MetricsService metricsService) {
 		
 		this.userRepository=userRepository;
 		this.passwordEncoder=passwordEncoder;
 		this.userEventProducer=userEventProducer;
+		this.metricsService=metricsService;
 		
 	}
 	
@@ -41,7 +47,7 @@ public class UserService {
 		user.setRole(Role.USER);
 		
 		User savedUser=userRepository.save(user);
-		
+		metricsService.incrementRegistration();
 		
 		UserRegisteredEvent event=new UserRegisteredEvent(
 				
