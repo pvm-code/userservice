@@ -47,6 +47,7 @@ public class UserService {
 		user.setRole(Role.USER);
 		
 		User savedUser=userRepository.save(user);
+		userRepository.flush();
 		metricsService.incrementRegistration();
 		
 		UserRegisteredEvent event=new UserRegisteredEvent(
