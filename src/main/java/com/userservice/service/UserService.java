@@ -58,7 +58,7 @@ public class UserService {
 				
 				
 				);
-		
+		System.out.println("Calling Kafka producer...");
 		
 		userEventProducer.publishUserRegistered(event);
 		
