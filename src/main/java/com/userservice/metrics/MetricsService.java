@@ -15,7 +15,7 @@ public class MetricsService {
 	private final Counter kafkaProduced;
 	
 	public MetricsService(MeterRegistry registry) {
-		
+	
 		this.userRegistrations=
 				registry.counter("user_registrations_total");
 	
