@@ -47,6 +47,8 @@ public class JwtService {
 		
 		Map<String, Object> claims = new HashMap<>();
 		
+		claims.put("userId", userDetails.getId().toString());
+
 		claims.put("role", userDetails.getRole().name());
 		
 		
